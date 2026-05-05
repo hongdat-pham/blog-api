@@ -1,4 +1,6 @@
-export function logger(req, res, next) {
+import { Request, Response, NextFunction } from "express";
+
+export function logger(req: Request, res: Response, next: NextFunction) {
   const start = Date.now();
   res.on("finish", () => {
     console.log(
