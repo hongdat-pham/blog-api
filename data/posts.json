@@ -1,0 +1,23 @@
+[
+  {
+    "id": 1777964320629,
+    "title": "Hello World",
+    "content": "This is my first blog post content",
+    "createdAt": "2026-05-05T06:58:40.629Z",
+    "updatedAt": "2026-05-05T06:58:40.629Z"
+  },
+  {
+    "id": 1777964429907,
+    "title": "Updated title",
+    "content": "Day la doan van thu 3",
+    "createdAt": "2026-05-05T07:00:29.907Z",
+    "updatedAt": "2026-05-05T07:02:42.197Z"
+  },
+  {
+    "id": 1777964441704,
+    "title": "Tam biet",
+    "content": "Day la doan van thu 3",
+    "createdAt": "2026-05-05T07:00:41.704Z",
+    "updatedAt": "2026-05-05T07:00:41.704Z"
+  }
+]
