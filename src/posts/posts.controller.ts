@@ -19,12 +19,12 @@ export const PostsController = {
   },
 
   async getOne(req: Request, res: Response, next: NextFunction) {
-    try {
-      const post = await service.findById(Number(req.params.id));
-      res.json(post);
-    } catch (err) {
-      next(err);
+    const result = await service.findById(Number(req.params.id));
+    if (result.error) {
+      res.status(404).json({ error: result.error });
+      return;
     }
+    res.json(result.data);
   },
 
   async create(req: Request, res: Response, next: NextFunction) {
@@ -37,20 +37,20 @@ export const PostsController = {
   },
 
   async update(req: Request, res: Response, next: NextFunction) {
-    try {
-      const post = await service.update(Number(req.params.id), req.body);
-      res.json(post);
-    } catch (err) {
-      next(err);
+    const result = await service.update(Number(req.params.id), req.body);
+    if (result.error) {
+      res.status(404).json({ error: result.error });
+      return;
     }
+    res.json(result.data);
   },
 
   async delete(req: Request, res: Response, next: NextFunction) {
-    try {
-      await service.delete(Number(req.params.id));
-      res.status(204).send();
-    } catch (err) {
-      next(err);
+    const result = await service.delete(Number(req.params.id));
+    if (result.error) {
+      res.status(404).json({ error: result.error });
+      return;
     }
+    res.status(204).send();
   },
 };

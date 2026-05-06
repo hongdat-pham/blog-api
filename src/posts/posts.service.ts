@@ -1,7 +1,6 @@
 import { PostModel } from "./posts.model.js";
-import { AppError } from "../errors/AppError.js";
-import { Post } from "../types/post.types.js";
-import { PaginatedResponse } from "../types/common.types.js";
+import { Post, CreatePostDto, UpdatePostDto } from "../types/post.types.js";
+import { PaginatedResponse, ServiceResult } from "../types/common.types.js";
 
 interface FindAllParams {
   search?: string;
@@ -33,26 +32,25 @@ export class PostsService {
     return { data, total, page: Number(page), limit: Number(limit) };
   }
 
-  async findById(id: number): Promise<Post> {
+  async findById(id: number): Promise<ServiceResult<Post>> {
     const post = await PostModel.findById(id);
-    if (!post) throw new AppError("Post not found", 404);
-    return post;
+    if (!post) return { data: null, error: "Post not found" };
+    return { data: post, error: null };
   }
 
-  async create(
-    body: Omit<Post, "id" | "createdAt" | "updatedAt">,
-  ): Promise<Post> {
+  async create(body: CreatePostDto): Promise<Post> {
     return PostModel.create(body);
   }
 
-  async update(id: number, body: Partial<Post>): Promise<Post> {
+  async update(id: number, body: UpdatePostDto): Promise<ServiceResult<Post>> {
     const post = await PostModel.update(id, body);
-    if (!post) throw new AppError("Post not found", 404);
-    return post;
+    if (!post) return { data: null, error: "Post not found" };
+    return { data: post, error: null };
   }
 
-  async delete(id: number): Promise<void> {
+  async delete(id: number): Promise<ServiceResult<null>> {
     const deleted = await PostModel.delete(id);
-    if (!deleted) throw new AppError("Post not found", 404);
+    if (!deleted) return { data: null, error: "Post not found" };
+    return { data: null, error: null };
   }
 }
