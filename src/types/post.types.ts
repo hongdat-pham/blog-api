@@ -10,3 +10,7 @@ export type CreatePostDto = {
   title: string;
   content: string;
 };
+
+export type UpdatePostDto = Partial<
+  Omit<Post, "id" | "createdAt" | "updatedAt">
+>;

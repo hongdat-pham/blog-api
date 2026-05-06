@@ -10,3 +10,7 @@ export type CreateCommentDto = {
   author: string;
   content: string;
 };
+
+export type UpdateCommentDto = Partial<
+  Omit<Comment, "id" | "postId" | "createdAt">
+>;
