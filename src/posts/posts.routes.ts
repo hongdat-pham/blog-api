@@ -2,6 +2,8 @@ import { Router } from "express";
 import { body } from "express-validator";
 import { validate } from "../middlewares/validate.js";
 import { postsController } from "./posts.controller.js";
+import requireRole from "../middlewares/requireRole.js";
+import auth from "../middlewares/auth.js";
 
 const router = Router();
 
@@ -25,6 +27,6 @@ router.get("/", postsController.getAll);
 router.get("/:id", postsController.getOne);
 router.post("/", createRules, validate, postsController.create);
 router.patch("/:id", updateRules, validate, postsController.update);
-router.delete("/:id", postsController.delete);
+router.delete("/:id", auth, requireRole("admin"), postsController.delete);
 
 export default router;

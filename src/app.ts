@@ -1,7 +1,7 @@
 import express from "express";
-import { logger } from "./middlewares/logger.js";
-import { auth } from "./middlewares/auth.js";
-import { errorHandler } from "./middlewares/errorHandler.js";
+import logger from "./middlewares/logger.js";
+import auth from "./middlewares/auth.js";
+import errorHandler from "./middlewares/errorHandler.js";
 import postsRouter from "./posts/posts.routes.js";
 import commentsRouter from "./comments/comments.routes.js";
 

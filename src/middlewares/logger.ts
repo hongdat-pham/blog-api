@@ -1,11 +1,14 @@
-import { Request, Response, NextFunction } from "express";
+import { RequestHandler } from "express";
 
-export function logger(req: Request, res: Response, next: NextFunction) {
+const logger: RequestHandler = (req, res, next) => {
   const start = Date.now();
+
   res.on("finish", () => {
-    console.log(
-      `[${req.method}] ${req.url} ${res.statusCode} ${Date.now() - start}ms`,
-    );
+    const duration = Date.now() - start;
+    console.log(`[${req.method}] ${req.url} ${res.statusCode} ${duration}ms`);
   });
+
   next();
-}
+};
+
+export default logger;

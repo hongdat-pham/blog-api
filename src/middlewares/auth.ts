@@ -1,10 +1,20 @@
+import { RequestHandler } from "express";
 import config from "../config.js";
-import { Request, Response, NextFunction } from "express";
 
-export function auth(req: Request, res: Response, next: NextFunction) {
-  const key = req.headers["x-api-key"];
-  if (!key || key !== config.apiKey) {
-    return res.status(401).json({ error: "Unauthorized" });
+const auth: RequestHandler = (req, res, next) => {
+  const apiKey = req.headers["x-api-key"];
+
+  if (!apiKey || (apiKey !== config.apiKey && apiKey !== config.adminKey)) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
   }
+
+  req.user = {
+    id: "system",
+    role: apiKey === config.adminKey ? "admin" : "user",
+  };
+
   next();
-}
+};
+
+export default auth;
