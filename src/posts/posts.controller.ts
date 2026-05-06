@@ -1,13 +1,16 @@
-import { PostsService } from "./posts.service.js";
 import { Request, Response, NextFunction } from "express";
+import { PostsRepository } from "./posts.model.js";
+import { PostsService, IPostsService } from "./posts.service.js";
 
-const service = new PostsService();
+const repo = new PostsRepository();
+const service: IPostsService = new PostsService(repo);
+export class PostsController {
+  constructor(private readonly service: IPostsService) {}
 
-export const PostsController = {
-  async getAll(req: Request, res: Response, next: NextFunction) {
+  getAll = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { search, page, limit } = req.query;
-      const result = await service.findAll({
+      const result = await this.service.findAll({
         search: search as string,
         page: page ? Number(page) : undefined,
         limit: limit ? Number(limit) : undefined,
@@ -16,41 +19,55 @@ export const PostsController = {
     } catch (err) {
       next(err);
     }
-  },
+  };
 
-  async getOne(req: Request, res: Response, next: NextFunction) {
-    const result = await service.findById(Number(req.params.id));
-    if (result.error) {
-      res.status(404).json({ error: result.error });
-      return;
-    }
-    res.json(result.data);
-  },
-
-  async create(req: Request, res: Response, next: NextFunction) {
+  getOne = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const post = await service.create(req.body);
+      const result = await this.service.findById(Number(req.params.id));
+      if (result.error) {
+        res.status(404).json({ error: result.error });
+        return;
+      }
+      res.json(result.data);
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  create = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const post = await this.service.create(req.body);
       res.status(201).json(post);
     } catch (err) {
       next(err);
     }
-  },
+  };
 
-  async update(req: Request, res: Response, next: NextFunction) {
-    const result = await service.update(Number(req.params.id), req.body);
-    if (result.error) {
-      res.status(404).json({ error: result.error });
-      return;
+  update = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const result = await this.service.update(Number(req.params.id), req.body);
+      if (result.error) {
+        res.status(404).json({ error: result.error });
+        return;
+      }
+      res.json(result.data);
+    } catch (err) {
+      next(err);
     }
-    res.json(result.data);
-  },
+  };
 
-  async delete(req: Request, res: Response, next: NextFunction) {
-    const result = await service.delete(Number(req.params.id));
-    if (result.error) {
-      res.status(404).json({ error: result.error });
-      return;
+  delete = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const result = await this.service.delete(Number(req.params.id));
+      if (result.error) {
+        res.status(404).json({ error: result.error });
+        return;
+      }
+      res.status(204).send();
+    } catch (err) {
+      next(err);
     }
-    res.status(204).send();
-  },
-};
+  };
+}
+
+export const postsController = new PostsController(service);

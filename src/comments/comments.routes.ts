@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { body } from "express-validator";
 import { validate } from "../middlewares/validate.js";
-import { CommentsController } from "./comments.controller.js";
+import { commentsController } from "./comments.controller.js";
 
 const router = Router({ mergeParams: true });
 
@@ -13,8 +13,8 @@ const createRules = [
     .withMessage("Content min 5 chars"),
 ];
 
-router.get("/", CommentsController.getAll);
-router.post("/", createRules, validate, CommentsController.create);
-router.delete("/:commentId", CommentsController.delete);
+router.get("/", commentsController.getAll);
+router.post("/", createRules, validate, commentsController.create);
+router.delete("/:commentId", commentsController.delete);
 
 export default router;

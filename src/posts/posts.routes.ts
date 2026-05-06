@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { body } from "express-validator";
 import { validate } from "../middlewares/validate.js";
-import { PostsController } from "./posts.controller.js";
+import { postsController } from "./posts.controller.js";
 
 const router = Router();
 
@@ -21,10 +21,10 @@ const updateRules = [
   body("content").optional().isString().isLength({ min: 10 }),
 ];
 
-router.get("/", PostsController.getAll);
-router.get("/:id", PostsController.getOne);
-router.post("/", createRules, validate, PostsController.create);
-router.patch("/:id", updateRules, validate, PostsController.update);
-router.delete("/:id", PostsController.delete);
+router.get("/", postsController.getAll);
+router.get("/:id", postsController.getOne);
+router.post("/", createRules, validate, postsController.create);
+router.patch("/:id", updateRules, validate, postsController.update);
+router.delete("/:id", postsController.delete);
 
 export default router;

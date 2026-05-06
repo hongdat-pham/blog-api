@@ -3,11 +3,11 @@ import { Comment, CreateCommentDto } from "../types/comment.types.js";
 
 const FILE = "comments.json";
 
-export const CommentModel = {
+export class CommentsRepository {
   async findByPost(postId: number): Promise<Comment[]> {
     const all = await readData<Comment>(FILE);
     return all.filter((c) => c.postId === postId);
-  },
+  }
 
   async create(postId: number, data: CreateCommentDto): Promise<Comment> {
     const all = await readData<Comment>(FILE);
@@ -20,7 +20,7 @@ export const CommentModel = {
     all.push(comment);
     await writeData<Comment>(FILE, all);
     return comment;
-  },
+  }
 
   async delete(postId: number, commentId: number): Promise<boolean> {
     const all = await readData<Comment>(FILE);
@@ -29,5 +29,5 @@ export const CommentModel = {
     all.splice(idx, 1);
     await writeData<Comment>(FILE, all);
     return true;
-  },
-};
+  }
+}

@@ -1,4 +1,4 @@
-import { PostModel } from "./posts.model.js";
+import { PostsRepository } from "./posts.model.js";
 import { Post, CreatePostDto, UpdatePostDto } from "../types/post.types.js";
 import { PaginatedResponse, ServiceResult } from "../types/common.types.js";
 
@@ -7,14 +7,23 @@ interface FindAllParams {
   page?: number;
   limit?: number;
 }
+export interface IPostsService {
+  findAll(params: FindAllParams): Promise<PaginatedResponse<Post>>;
+  findById(id: number): Promise<ServiceResult<Post>>;
+  create(body: CreatePostDto): Promise<Post>;
+  update(id: number, body: UpdatePostDto): Promise<ServiceResult<Post>>;
+  delete(id: number): Promise<ServiceResult<null>>;
+}
 
-export class PostsService {
+export class PostsService implements IPostsService {
+  constructor(private readonly repo: PostsRepository) {}
+
   async findAll({
     search,
     page = 1,
     limit = 10,
   }: FindAllParams): Promise<PaginatedResponse<Post>> {
-    let posts = await PostModel.findAll();
+    let posts = await this.repo.findAll();
 
     if (search) {
       const kw = search.toLowerCase();
@@ -33,23 +42,23 @@ export class PostsService {
   }
 
   async findById(id: number): Promise<ServiceResult<Post>> {
-    const post = await PostModel.findById(id);
+    const post = await this.repo.findById(id); // gọi repo
     if (!post) return { data: null, error: "Post not found" };
     return { data: post, error: null };
   }
 
   async create(body: CreatePostDto): Promise<Post> {
-    return PostModel.create(body);
+    return this.repo.create(body); // gọi repo
   }
 
   async update(id: number, body: UpdatePostDto): Promise<ServiceResult<Post>> {
-    const post = await PostModel.update(id, body);
+    const post = await this.repo.update(id, body); // gọi repo
     if (!post) return { data: null, error: "Post not found" };
     return { data: post, error: null };
   }
 
   async delete(id: number): Promise<ServiceResult<null>> {
-    const deleted = await PostModel.delete(id);
+    const deleted = await this.repo.delete(id); // gọi repo
     if (!deleted) return { data: null, error: "Post not found" };
     return { data: null, error: null };
   }
