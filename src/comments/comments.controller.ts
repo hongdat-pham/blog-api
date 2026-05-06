@@ -6,8 +6,12 @@ const service = new CommentsService();
 export const CommentsController = {
   async getAll(req: Request, res: Response, next: NextFunction) {
     try {
-      const comments = await service.findByPost(Number(req.params.postId));
-      res.json(comments);
+      const result = await service.findByPost(Number(req.params.postId));
+      if (result.error) {
+        res.status(404).json({ error: result.error });
+        return;
+      }
+      res.json(result.data);
     } catch (err) {
       next(err);
     }
@@ -15,22 +19,26 @@ export const CommentsController = {
 
   async create(req: Request, res: Response, next: NextFunction) {
     try {
-      const comment = await service.create(Number(req.params.postId), req.body);
-      res.status(201).json(comment);
+      const result = await service.create(Number(req.params.postId), req.body);
+      if (result.error) {
+        res.status(404).json({ error: result.error });
+        return;
+      }
+      res.status(201).json(result.data);
     } catch (err) {
       next(err);
     }
   },
 
   async delete(req: Request, res: Response, next: NextFunction) {
-    try {
-      await service.delete(
-        Number(req.params.postId),
-        Number(req.params.commentId),
-      );
-      res.status(204).send();
-    } catch (err) {
-      next(err);
+    const result = await service.delete(
+      Number(req.params.postId),
+      Number(req.params.commentId),
+    );
+    if (result.error) {
+      res.status(404).json({ error: result.error });
+      return;
     }
+    res.status(204).send();
   },
 };
