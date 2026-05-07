@@ -12,6 +12,11 @@ export class PostsRepository {
     return posts.find((p) => p.id === id) || null;
   }
 
+  async findByTitle(title: string): Promise<Post | null> {
+    const posts = await readData<Post>(FILE);
+    return posts.find((p) => p.title === title) || null;
+  }
+
   async create(
     data: Omit<Post, "id" | "createdAt" | "updatedAt">,
   ): Promise<Post> {

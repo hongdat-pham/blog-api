@@ -3,7 +3,6 @@ import { PostsRepository } from "../posts/posts.model.js";
 import { CommentsRepository } from "./comments.model.js";
 import { CommentsService, ICommentsService } from "./comments.service.js";
 
-// Nối dây từ dưới lên trên
 const postsRepo = new PostsRepository();
 const commentsRepo = new CommentsRepository();
 const service: ICommentsService = new CommentsService(postsRepo, commentsRepo);
@@ -13,12 +12,8 @@ export class CommentsController {
 
   getAll = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const result = await this.service.findByPost(Number(req.params.postId));
-      if (result.error) {
-        res.status(404).json({ error: result.error });
-        return;
-      }
-      res.json(result.data);
+      const comments = await this.service.findByPost(Number(req.params.postId));
+      res.json(comments);
     } catch (err) {
       next(err);
     }
@@ -26,15 +21,11 @@ export class CommentsController {
 
   create = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const result = await this.service.create(
+      const comment = await this.service.create(
         Number(req.params.postId),
         req.body,
       );
-      if (result.error) {
-        res.status(404).json({ error: result.error });
-        return;
-      }
-      res.status(201).json(result.data);
+      res.status(201).json(comment);
     } catch (err) {
       next(err);
     }
@@ -42,14 +33,10 @@ export class CommentsController {
 
   delete = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const result = await this.service.delete(
+      await this.service.delete(
         Number(req.params.postId),
         Number(req.params.commentId),
       );
-      if (result.error) {
-        res.status(404).json({ error: result.error });
-        return;
-      }
       res.status(204).send();
     } catch (err) {
       next(err);

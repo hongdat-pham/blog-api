@@ -19,5 +19,19 @@
     "content": "Day la doan van thu 3",
     "createdAt": "2026-05-05T07:00:41.704Z",
     "updatedAt": "2026-05-05T07:00:41.704Z"
+  },
+  {
+    "id": 1778159428043,
+    "title": "Hello",
+    "content": "Muốn học cái khác",
+    "createdAt": "2026-05-07T13:10:28.043Z",
+    "updatedAt": "2026-05-07T13:10:28.043Z"
+  },
+  {
+    "id": 1778159889740,
+    "title": "Hello World1",
+    "content": "This is another post with the same title",
+    "createdAt": "2026-05-07T13:18:09.740Z",
+    "updatedAt": "2026-05-07T13:18:09.740Z"
   }
 ]

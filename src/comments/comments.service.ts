@@ -1,15 +1,12 @@
 import { PostsRepository } from "../posts/posts.model.js";
 import { CommentsRepository } from "./comments.model.js";
 import { Comment, CreateCommentDto } from "../types/comment.types.js";
-import { ServiceResult } from "../types/common.types.js";
+import { NotFoundError } from "../errors/index.js";
 
 export interface ICommentsService {
-  findByPost(postId: number): Promise<ServiceResult<Comment[]>>;
-  create(
-    postId: number,
-    body: CreateCommentDto,
-  ): Promise<ServiceResult<Comment>>;
-  delete(postId: number, commentId: number): Promise<ServiceResult<null>>;
+  findByPost(postId: number): Promise<Comment[]>;
+  create(postId: number, body: CreateCommentDto): Promise<Comment>;
+  delete(postId: number, commentId: number): Promise<void>;
 }
 
 export class CommentsService implements ICommentsService {
@@ -18,29 +15,20 @@ export class CommentsService implements ICommentsService {
     private readonly commentsRepo: CommentsRepository,
   ) {}
 
-  async findByPost(postId: number): Promise<ServiceResult<Comment[]>> {
+  async findByPost(postId: number): Promise<Comment[]> {
     const post = await this.postsRepo.findById(postId);
-    if (!post) return { data: null, error: "Post not found" };
-    const comments = await this.commentsRepo.findByPost(postId);
-    return { data: comments, error: null };
+    if (!post) throw new NotFoundError("Post");
+    return this.commentsRepo.findByPost(postId);
   }
 
-  async create(
-    postId: number,
-    body: CreateCommentDto,
-  ): Promise<ServiceResult<Comment>> {
+  async create(postId: number, body: CreateCommentDto): Promise<Comment> {
     const post = await this.postsRepo.findById(postId);
-    if (!post) return { data: null, error: "Post not found" };
-    const comment = await this.commentsRepo.create(postId, body);
-    return { data: comment, error: null };
+    if (!post) throw new NotFoundError("Post");
+    return this.commentsRepo.create(postId, body);
   }
 
-  async delete(
-    postId: number,
-    commentId: number,
-  ): Promise<ServiceResult<null>> {
+  async delete(postId: number, commentId: number): Promise<void> {
     const deleted = await this.commentsRepo.delete(postId, commentId);
-    if (!deleted) return { data: null, error: "Comment not found" };
-    return { data: null, error: null };
+    if (!deleted) throw new NotFoundError("Comment");
   }
 }

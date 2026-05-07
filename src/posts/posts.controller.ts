@@ -4,6 +4,7 @@ import { PostsService, IPostsService } from "./posts.service.js";
 
 const repo = new PostsRepository();
 const service: IPostsService = new PostsService(repo);
+
 export class PostsController {
   constructor(private readonly service: IPostsService) {}
 
@@ -23,12 +24,8 @@ export class PostsController {
 
   getOne = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const result = await this.service.findById(Number(req.params.id));
-      if (result.error) {
-        res.status(404).json({ error: result.error });
-        return;
-      }
-      res.json(result.data);
+      const post = await this.service.findById(Number(req.params.id));
+      res.json(post);
     } catch (err) {
       next(err);
     }
@@ -45,12 +42,8 @@ export class PostsController {
 
   update = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const result = await this.service.update(Number(req.params.id), req.body);
-      if (result.error) {
-        res.status(404).json({ error: result.error });
-        return;
-      }
-      res.json(result.data);
+      const post = await this.service.update(Number(req.params.id), req.body);
+      res.json(post);
     } catch (err) {
       next(err);
     }
@@ -58,11 +51,7 @@ export class PostsController {
 
   delete = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const result = await this.service.delete(Number(req.params.id));
-      if (result.error) {
-        res.status(404).json({ error: result.error });
-        return;
-      }
+      await this.service.delete(Number(req.params.id));
       res.status(204).send();
     } catch (err) {
       next(err);

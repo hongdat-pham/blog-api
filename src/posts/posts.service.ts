@@ -1,19 +1,20 @@
 import { PostsRepository } from "./posts.model.js";
 import { Post, CreatePostDto, UpdatePostDto } from "../types/post.types.js";
-import { PaginatedResponse, ServiceResult } from "../types/common.types.js";
-import { NotFoundError, ValidationError } from "../errors/index.js";
+import { PaginatedResponse } from "../types/common.types.js";
+import { NotFoundError, ConflictError } from "../errors/index.js";
 
 interface FindAllParams {
   search?: string;
   page?: number;
   limit?: number;
 }
+
 export interface IPostsService {
   findAll(params: FindAllParams): Promise<PaginatedResponse<Post>>;
-  findById(id: number): Promise<ServiceResult<Post>>;
+  findById(id: number): Promise<Post>;
   create(body: CreatePostDto): Promise<Post>;
-  update(id: number, body: UpdatePostDto): Promise<ServiceResult<Post>>;
-  delete(id: number): Promise<ServiceResult<null>>;
+  update(id: number, body: UpdatePostDto): Promise<Post>;
+  delete(id: number): Promise<void>;
 }
 
 export class PostsService implements IPostsService {
@@ -42,25 +43,28 @@ export class PostsService implements IPostsService {
     return { data, total, page: Number(page), limit: Number(limit) };
   }
 
-  async findById(id: number): Promise<ServiceResult<Post>> {
-    const post = await this.repo.findById(id); // gọi repo
-    if (!post) return { data: null, error: "Post not found" };
-    return { data: post, error: null };
+  async findById(id: number): Promise<Post> {
+    const post = await this.repo.findById(id);
+    if (!post) throw new NotFoundError("Post");
+    return post;
   }
 
   async create(body: CreatePostDto): Promise<Post> {
-    return this.repo.create(body); // gọi repo
+    const existingPost = await this.repo.findByTitle(body.title);
+    if (existingPost) {
+      throw new ConflictError("Post with this title");
+    }
+    return this.repo.create(body);
   }
 
-  async update(id: number, body: UpdatePostDto): Promise<ServiceResult<Post>> {
-    const post = await this.repo.update(id, body); // gọi repo
-    if (!post) return { data: null, error: "Post not found" };
-    return { data: post, error: null };
+  async update(id: number, body: UpdatePostDto): Promise<Post> {
+    const post = await this.repo.update(id, body);
+    if (!post) throw new NotFoundError("Post");
+    return post;
   }
 
-  async delete(id: number): Promise<ServiceResult<null>> {
-    const deleted = await this.repo.delete(id); // gọi repo
-    if (!deleted) return { data: null, error: "Post not found" };
-    return { data: null, error: null };
+  async delete(id: number): Promise<void> {
+    const deleted = await this.repo.delete(id);
+    if (!deleted) throw new NotFoundError("Post");
   }
 }
