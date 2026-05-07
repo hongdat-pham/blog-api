@@ -1,6 +1,7 @@
 import { PostsRepository } from "./posts.model.js";
 import { Post, CreatePostDto, UpdatePostDto } from "../types/post.types.js";
 import { PaginatedResponse, ServiceResult } from "../types/common.types.js";
+import { NotFoundError, ValidationError } from "../errors/index.js";
 
 interface FindAllParams {
   search?: string;
