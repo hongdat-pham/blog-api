@@ -1,11 +1,14 @@
 # Blog API
 
-A simple REST API to manage your blog, built with **Node.js** and **Express.js** .
+A simple REST API to manage blog posts and comments, built with **Node.js** , **Express.js** and **TypeScript** .
 
 ## Tech Stack
 
 - Node.js (ESM)
 - Express.js
+- TypeScript (strict mode)
+- express-validator
+- Zod (config validation)
 - File-based storage (JSON)
 
 ---
@@ -30,14 +33,20 @@ npm install
 ```env
 PORT=3000
 NODE_ENV=development
-APP_NAME=Blog API
+APP_NAME=Blog Api
 API_KEY=blog-secret-key
+ADMIN_KEY=my-admin-key
 ```
 
 ### 4. Run the server
 
 ```bash
+# Development
 npm run dev
+
+# Production
+npm run build
+npm start
 ```
 
 Server will be running at `http://localhost:3000`
@@ -163,6 +172,7 @@ Body:
 | ------ | ----------------------------------------- |
 | 401    | Unauthorized — missing or invalid API key |
 | 404    | Resource not found                        |
+| 409    | Conflict — duplicate resource             |
 | 422    | Validation error — invalid request body   |
 | 500    | Internal server error                     |
 
@@ -173,32 +183,45 @@ Body:
 ```
 blog-api/
 ├── src/
-│   ├── app.js              # Express app setup
-│   ├── server.js           # Server entry point
-│   ├── config.js           # Environment config
+│   ├── app.ts
+│   ├── server.ts
+│   ├── config.ts
 │   ├── data/
-│   │   └── db.js           # File-based data store
+│   │   └── db.ts
 │   ├── posts/
-│   │   ├── posts.controller.js
-│   │   ├── posts.model.js
-│   │   ├── posts.routes.js
-│   │   └── posts.service.js
+│   │   ├── posts.controller.ts
+│   │   ├── posts.model.ts
+│   │   ├── posts.routes.ts
+│   │   └── posts.service.ts
 │   ├── comments/
-│   │   ├── comments.controller.js
-│   │   ├── comments.model.js
-│   │   ├── comments.routes.js
-│   │   └── comments.service.js
+│   │   ├── comments.controller.ts
+│   │   ├── comments.model.ts
+│   │   ├── comments.routes.ts
+│   │   └── comments.service.ts
 │   ├── middlewares/
-│   │   ├── auth.js
-│   │   ├── errorHandler.js
-│   │   ├── logger.js
-│   │   └── validate.js
-│   └── errors/
-│       └── AppError.js
+│   │   ├── auth.ts
+│   │   ├── errorHandler.ts
+│   │   ├── logger.ts
+│   │   ├── requireRole.ts
+│   │   └── validate.ts
+│   ├── errors/
+│   │   ├── AppError.ts
+│   │   ├── ConflictError.ts
+│   │   ├── NotFoundError.ts
+│   │   ├── UnauthorizedError.ts
+│   │   ├── ValidationError.ts
+│   │   └── index.ts
+│   └── types/
+│       ├── post.types.ts
+│       ├── comment.types.ts
+│       ├── common.types.ts
+│       └── express.d.ts
 ├── data/
-│   ├── posts.json          # Posts storage
-│   └── comments.json       # Comments storage
-├── .env                    # Environment variables (not committed)
+│   ├── posts.json
+│   └── comments.json
+├── .env
 ├── .gitignore
-└── package.json
+├── package.json
+├── tsconfig.json
+└── README.md
 ```
