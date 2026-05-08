@@ -1,14 +1,30 @@
-const apiKey = process.env.API_KEY;
-const adminKey = process.env.ADMIN_KEY;
+import { z } from "zod";
+const envSchema = z.object({
+  PORT: z.coerce.number().min(1024).max(65535).default(3000),
+  NODE_ENV: z
+    .enum(["development", "production", "test"])
+    .default("development"),
+  APP_NAME: z.string().min(1),
+  API_KEY: z.string().min(1),
+  ADMIN_KEY: z.string().min(1),
+});
+const result = envSchema.safeParse(process.env);
+if (!result.success) {
+  console.error("Invalid environment variables:");
+  console.error(result.error.flatten().fieldErrors);
+  process.exit(1);
+}
 
-if (!apiKey) throw new Error("API_KEY is required");
-if (!adminKey) throw new Error("ADMIN_KEY is required");
+const env = result.data;
 
 const config = {
-  port: process.env.PORT || 3000,
-  nodeEnv: process.env.NODE_ENV || "development",
-  apiKey,
-  adminKey,
-};
+  port: env.PORT,
+  nodeEnv: env.NODE_ENV,
+  appName: env.APP_NAME,
+  apiKey: env.API_KEY,
+  adminKey: env.ADMIN_KEY,
+  isProduction: env.NODE_ENV === "production",
+  isDevelopment: env.NODE_ENV === "development",
+} as const;
 
 export default config;

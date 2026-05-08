@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction, ErrorRequestHandler } from "express";
 import { AppError } from "../errors/index.js";
+import config from "../config.js";
 
 const errorHandler: ErrorRequestHandler = (
   err: Error,
@@ -12,6 +13,7 @@ const errorHandler: ErrorRequestHandler = (
       error: err.message,
       statusCode: err.statusCode,
       timestamp: new Date().toISOString(),
+      ...(config.isDevelopment && { stack: err.stack }),
     });
     return;
   }
@@ -21,6 +23,7 @@ const errorHandler: ErrorRequestHandler = (
     error: "Internal server error",
     statusCode: 500,
     timestamp: new Date().toISOString(),
+    ...(config.isDevelopment && { stack: err.stack }),
   });
 };
 

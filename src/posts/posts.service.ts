@@ -58,6 +58,7 @@ export class PostsService implements IPostsService {
   }
 
   async update(id: number, body: UpdatePostDto): Promise<Post> {
+    await this.findById(id);
     const post = await this.repo.update(id, body);
     if (!post) throw new NotFoundError("Post");
     return post;
