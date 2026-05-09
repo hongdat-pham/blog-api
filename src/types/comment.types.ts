@@ -1,16 +1,7 @@
-export interface Comment {
-  id: number;
-  postId: number;
-  author: string;
-  content: string;
-  createdAt: string;
-}
-
 export type CreateCommentDto = {
-  author: string;
   content: string;
 };
 
-export type UpdateCommentDto = Partial<
-  Omit<Comment, "id" | "postId" | "createdAt">
->;
+export type UpdateCommentDto = {
+  content?: string;
+};

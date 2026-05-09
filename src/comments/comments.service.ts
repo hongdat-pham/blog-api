@@ -1,6 +1,7 @@
 import { PostsRepository } from "../posts/posts.model.js";
 import { CommentsRepository } from "./comments.model.js";
-import { Comment, CreateCommentDto } from "../types/comment.types.js";
+import { Comment } from "@prisma/client";
+import { CreateCommentDto } from "../types/comment.types.js";
 import { NotFoundError } from "../errors/index.js";
 
 export interface ICommentsService {

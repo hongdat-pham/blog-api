@@ -1,33 +1,33 @@
-import { readData, writeData } from "../data/db.js";
-import { Comment, CreateCommentDto } from "../types/comment.types.js";
-
-const FILE = "comments.json";
+import prisma from "../database/prisma.js";
+import { Comment } from "@prisma/client";
 
 export class CommentsRepository {
   async findByPost(postId: number): Promise<Comment[]> {
-    const all = await readData<Comment>(FILE);
-    return all.filter((c) => c.postId === postId);
+    return prisma.comment.findMany({
+      where: { postId },
+      orderBy: { createdAt: "asc" },
+    });
   }
 
-  async create(postId: number, data: CreateCommentDto): Promise<Comment> {
-    const all = await readData<Comment>(FILE);
-    const comment: Comment = {
-      id: Date.now(),
-      postId,
-      ...data,
-      createdAt: new Date().toISOString(),
-    };
-    all.push(comment);
-    await writeData<Comment>(FILE, all);
-    return comment;
+  async create(postId: number, data: { content: string }): Promise<Comment> {
+    return prisma.comment.create({
+      data: {
+        content: data.content,
+        postId,
+      },
+    });
   }
 
   async delete(postId: number, commentId: number): Promise<boolean> {
-    const all = await readData<Comment>(FILE);
-    const idx = all.findIndex((c) => c.id === commentId && c.postId === postId);
-    if (idx === -1) return false;
-    all.splice(idx, 1);
-    await writeData<Comment>(FILE, all);
+    const exists = await prisma.comment.findFirst({
+      where: {
+        id: commentId,
+        postId,
+      },
+    });
+    if (!exists) return false;
+
+    await prisma.comment.delete({ where: { id: commentId } });
     return true;
   }
 }

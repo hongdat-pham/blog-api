@@ -10,7 +10,6 @@ export async function readData<T>(filename: string): Promise<T[]> {
     const content = await readFile(join(dataDir, filename), "utf8");
     return JSON.parse(content) as T[];
   } catch (err) {
-    // err trong catch luôn là 'unknown' — phải kiểm tra trước khi dùng
     if (
       err instanceof Error &&
       (err as NodeJS.ErrnoException).code === "ENOENT"

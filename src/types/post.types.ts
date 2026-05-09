@@ -1,16 +1,10 @@
-export interface Post {
-  id: number;
-  title: string;
-  content: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
 export type CreatePostDto = {
   title: string;
   content: string;
+  authorId: number;
 };
 
-export type UpdatePostDto = Partial<
-  Omit<Post, "id" | "createdAt" | "updatedAt">
->;
+export type UpdatePostDto = {
+  title?: string;
+  content?: string;
+};

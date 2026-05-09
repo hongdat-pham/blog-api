@@ -6,7 +6,6 @@ import { commentsController } from "./comments.controller.js";
 const router = Router({ mergeParams: true });
 
 const createRules = [
-  body("author").isString().isLength({ min: 2 }).withMessage("Author required"),
   body("content")
     .isString()
     .isLength({ min: 5 })

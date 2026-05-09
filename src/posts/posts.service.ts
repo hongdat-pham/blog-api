@@ -1,5 +1,6 @@
 import { PostsRepository } from "./posts.model.js";
-import { Post, CreatePostDto, UpdatePostDto } from "../types/post.types.js";
+import { Post } from "@prisma/client";
+import { CreatePostDto, UpdatePostDto } from "../types/post.types.js";
 import { PaginatedResponse } from "../types/common.types.js";
 import { NotFoundError, ConflictError } from "../errors/index.js";
 
@@ -25,21 +26,7 @@ export class PostsService implements IPostsService {
     page = 1,
     limit = 10,
   }: FindAllParams): Promise<PaginatedResponse<Post>> {
-    let posts = await this.repo.findAll();
-
-    if (search) {
-      const kw = search.toLowerCase();
-      posts = posts.filter(
-        (p) =>
-          p.title.toLowerCase().includes(kw) ||
-          p.content.toLowerCase().includes(kw),
-      );
-    }
-
-    const total = posts.length;
-    const start = (page - 1) * limit;
-    const data = posts.slice(start, start + limit);
-
+    const { data, total } = await this.repo.findAll({ search, page, limit });
     return { data, total, page: Number(page), limit: Number(limit) };
   }
 
@@ -51,9 +38,7 @@ export class PostsService implements IPostsService {
 
   async create(body: CreatePostDto): Promise<Post> {
     const existingPost = await this.repo.findByTitle(body.title);
-    if (existingPost) {
-      throw new ConflictError("Post with this title");
-    }
+    if (existingPost) throw new ConflictError("Post with this title");
     return this.repo.create(body);
   }
 

@@ -1,56 +1,79 @@
-import { readData, writeData } from "../data/db.js";
-import { Post } from "../types/post.types.js";
+import prisma from "../database/prisma.js";
+import { Post } from "@prisma/client";
 
-const FILE = "posts.json";
 export class PostsRepository {
-  async findAll(): Promise<Post[]> {
-    return readData<Post>(FILE);
+  async findAll({
+    search,
+    page = 1,
+    limit = 10,
+  }: {
+    search?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<{ data: Post[]; total: number }> {
+    const where = search
+      ? {
+          OR: [
+            { title: { contains: search, mode: "insensitive" as const } },
+            { content: { contains: search, mode: "insensitive" as const } },
+          ],
+        }
+      : {};
+
+    const [data, total] = await Promise.all([
+      prisma.post.findMany({
+        where,
+        skip: (page - 1) * limit,
+        take: limit,
+        orderBy: { createdAt: "desc" },
+      }),
+      prisma.post.count({ where }),
+    ]);
+
+    return { data, total };
   }
 
   async findById(id: number): Promise<Post | null> {
-    const posts = await readData<Post>(FILE);
-    return posts.find((p) => p.id === id) || null;
+    return prisma.post.findUnique({
+      where: { id },
+    });
   }
 
   async findByTitle(title: string): Promise<Post | null> {
-    const posts = await readData<Post>(FILE);
-    return posts.find((p) => p.title === title) || null;
+    return prisma.post.findFirst({
+      where: { title },
+    });
   }
 
-  async create(
-    data: Omit<Post, "id" | "createdAt" | "updatedAt">,
-  ): Promise<Post> {
-    const posts = await readData<Post>(FILE);
-    const newPost: Post = {
-      id: Date.now(),
-      ...data,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    posts.push(newPost);
-    await writeData<Post>(FILE, posts);
-    return newPost;
+  async create(data: {
+    title: string;
+    content: string;
+    authorId: number;
+  }): Promise<Post> {
+    return prisma.post.create({ data });
   }
 
-  async update(id: number, data: Partial<Post>): Promise<Post | null> {
-    const posts = await readData<Post>(FILE);
-    const idx = posts.findIndex((p) => p.id === id);
-    if (idx === -1) return null;
-    posts[idx] = {
-      ...posts[idx],
-      ...data,
-      updatedAt: new Date().toISOString(),
-    };
-    await writeData<Post>(FILE, posts);
-    return posts[idx];
+  async update(
+    id: number,
+    data: Partial<{
+      title: string;
+      content: string;
+    }>,
+  ): Promise<Post | null> {
+    const exists = await prisma.post.findUnique({ where: { id } });
+    if (!exists) return null;
+
+    return prisma.post.update({
+      where: { id },
+      data,
+    });
   }
 
   async delete(id: number): Promise<boolean> {
-    const posts = await readData<Post>(FILE);
-    const idx = posts.findIndex((p) => p.id === id);
-    if (idx === -1) return false;
-    posts.splice(idx, 1);
-    await writeData<Post>(FILE, posts);
+    const exists = await prisma.post.findUnique({ where: { id } });
+    if (!exists) return false;
+
+    await prisma.post.delete({ where: { id } });
     return true;
   }
 }
