@@ -1,5 +1,6 @@
 import prisma from "../database/prisma.js";
-import { Post } from "@prisma/client";
+import { Post, Comment, User } from "@prisma/client";
+import { PostWithRelations, PostWithCount } from "../types/post.types.js";
 
 export class PostsRepository {
   async findAll({
@@ -10,7 +11,7 @@ export class PostsRepository {
     search?: string;
     page?: number;
     limit?: number;
-  }): Promise<{ data: Post[]; total: number }> {
+  }): Promise<{ data: PostWithCount[]; total: number }> {
     const where = search
       ? {
           OR: [
@@ -26,6 +27,11 @@ export class PostsRepository {
         skip: (page - 1) * limit,
         take: limit,
         orderBy: { createdAt: "desc" },
+        include: {
+          _count: {
+            select: { comments: true }, // Đếm số comment
+          },
+        },
       }),
       prisma.post.count({ where }),
     ]);
@@ -33,9 +39,17 @@ export class PostsRepository {
     return { data, total };
   }
 
-  async findById(id: number): Promise<Post | null> {
+  async findById(id: number): Promise<PostWithRelations | null> {
     return prisma.post.findUnique({
       where: { id },
+      include: {
+        author: {
+          select: { id: true, name: true }, // Chỉ lấy id và name
+        },
+        comments: {
+          orderBy: { createdAt: "desc" },
+        },
+      },
     });
   }
 
