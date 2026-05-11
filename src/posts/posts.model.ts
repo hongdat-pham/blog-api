@@ -29,7 +29,7 @@ export class PostsRepository {
         orderBy: { createdAt: "desc" },
         include: {
           _count: {
-            select: { comments: true }, // Đếm số comment
+            select: { comments: true },
           },
         },
       }),
@@ -44,7 +44,7 @@ export class PostsRepository {
       where: { id },
       include: {
         author: {
-          select: { id: true, name: true }, // Chỉ lấy id và name
+          select: { id: true, name: true },
         },
         comments: {
           orderBy: { createdAt: "desc" },
@@ -63,6 +63,7 @@ export class PostsRepository {
     title: string;
     content: string;
     authorId: number;
+    tags?: string[];
   }): Promise<Post> {
     return prisma.post.create({ data });
   }
@@ -72,6 +73,7 @@ export class PostsRepository {
     data: Partial<{
       title: string;
       content: string;
+      tags: string[];
     }>,
   ): Promise<Post | null> {
     const exists = await prisma.post.findUnique({ where: { id } });

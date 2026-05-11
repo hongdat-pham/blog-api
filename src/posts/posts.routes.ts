@@ -16,11 +16,15 @@ const createRules = [
     .isString()
     .isLength({ min: 10 })
     .withMessage("Content min 10 chars"),
+  body("tags").optional().isArray().withMessage("Tags must be an array"),
+  body("tags.*").isString().withMessage("Each tag must be a string"),
 ];
 
 const updateRules = [
   body("title").optional().isString().isLength({ min: 3 }),
   body("content").optional().isString().isLength({ min: 10 }),
+  body("tags").optional().isArray().withMessage("Tags must be an array"),
+  body("tags.*").isString().withMessage("Each tag must be a string"),
 ];
 
 router.get("/", postsController.getAll);

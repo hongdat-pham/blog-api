@@ -35,6 +35,7 @@ async function main() {
       title: "Getting Started with Node.js",
       content: "Node.js is a JavaScript runtime...",
       authorId: alice.id,
+      tags: ["nodejs", "typescript"],
     },
   });
 
@@ -43,6 +44,7 @@ async function main() {
       title: "Express Middleware Explained",
       content: "Middleware is a function that...",
       authorId: alice.id,
+      tags: ["nodejs"],
     },
   });
 
@@ -51,6 +53,7 @@ async function main() {
       title: "TypeScript Best Practices",
       content: "TypeScript adds static typing...",
       authorId: bob.id,
+      tags: ["typescript"],
     },
   });
 
@@ -59,6 +62,7 @@ async function main() {
       title: "Prisma ORM Guide",
       content: "Prisma makes database access easy...",
       authorId: bob.id,
+      tags: ["typescript"],
     },
   });
 
@@ -67,6 +71,7 @@ async function main() {
       title: "REST API Design Tips",
       content: "Good REST APIs use proper status codes...",
       authorId: charlie.id,
+      tags: ["html"],
     },
   });
 
