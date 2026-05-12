@@ -4,8 +4,12 @@ import { validate } from "../middlewares/validate.js";
 import { postsController } from "./posts.controller.js";
 import requireRole from "../middlewares/requireRole.js";
 import auth from "../middlewares/auth.js";
+import { PostsService } from "./posts.service.js";
+import { PostsRepository } from "./posts.model.js";
+import { AppError } from "../errors/index.js";
 
 const router = Router();
+const postsService = new PostsService(new PostsRepository());
 
 const createRules = [
   body("title")
@@ -32,5 +36,10 @@ router.get("/:id", postsController.getOne);
 router.post("/", createRules, validate, postsController.create);
 router.patch("/:id", updateRules, validate, postsController.update);
 router.delete("/:id", auth, requireRole("admin"), postsController.delete);
+router.post("/:id/publish", async (req, res, next) => {
+  const result = await postsService.publishPost(Number(req.params.id));
+  if (result.error) return next(new AppError(result.error, 400));
+  res.json(result.data);
+});
 
 export default router;

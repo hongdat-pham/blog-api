@@ -1,6 +1,6 @@
 import { PostsRepository } from "./posts.model.js";
 import { Post } from "@prisma/client";
-import { PaginatedResponse } from "../types/common.types.js";
+import { PaginatedResponse, ServiceResult } from "../types/common.types.js"; // ← thêm ServiceResult
 import { NotFoundError, ConflictError } from "../errors/index.js";
 import {
   CreatePostDto,
@@ -8,6 +8,7 @@ import {
   PostWithRelations,
   PostWithCount,
 } from "../types/post.types.js";
+import prisma from "../database/prisma.js";
 
 interface FindAllParams {
   search?: string;
@@ -21,6 +22,7 @@ export interface IPostsService {
   create(body: CreatePostDto): Promise<Post>;
   update(id: number, body: UpdatePostDto): Promise<Post>;
   delete(id: number): Promise<void>;
+  publishPost(id: number): Promise<ServiceResult<Post>>;
 }
 
 export class PostsService implements IPostsService {
@@ -57,5 +59,32 @@ export class PostsService implements IPostsService {
   async delete(id: number): Promise<void> {
     const deleted = await this.repo.delete(id);
     if (!deleted) throw new NotFoundError("Post");
+  }
+  async publishPost(id: number): Promise<ServiceResult<Post>> {
+    const existing = await this.repo.findById(id);
+    if (!existing) {
+      return { data: null, error: "Post not found" };
+    }
+    if (existing.status === "published") {
+      return { data: null, error: "Post is already published" };
+    }
+
+    const updatedPost = await prisma.$transaction(async (tx) => {
+      const post = await tx.post.update({
+        where: { id },
+        data: { status: "published" },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          action: "POST_PUBLISHED",
+          postId: post.id,
+        },
+      });
+
+      return post;
+    });
+
+    return { data: updatedPost, error: null };
   }
 }
