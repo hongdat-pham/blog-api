@@ -1,6 +1,6 @@
 import { PostsRepository } from "./posts.model.js";
 import { Post } from "@prisma/client";
-import { PaginatedResponse, ServiceResult } from "../types/common.types.js"; // ← thêm ServiceResult
+import { PaginatedResponse, ServiceResult } from "../types/common.types.js";
 import { NotFoundError, ConflictError } from "../errors/index.js";
 import {
   CreatePostDto,

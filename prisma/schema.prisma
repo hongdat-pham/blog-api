@@ -37,8 +37,8 @@ model Comment {
 }
 model AuditLog {
   id        Int      @id @default(autoincrement())
-  action    String   // Ví dụ: "POST_PUBLISHED", "USER_DELETED"
-  userId    Int?     // Ai thực hiện hành động (optional)
-  postId    Int?     // Liên quan đến post nào (optional)
+  action    String   
+  userId    Int?     
+  postId    Int?     
   createdAt DateTime @default(now())
 }
