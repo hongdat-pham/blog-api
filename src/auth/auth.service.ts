@@ -74,7 +74,6 @@ export class AuthService {
     return { data: publicUser, error: null };
   }
 
-  // login giờ trả về AccessToken thay vì PublicUser
   async login(dto: LoginDto): Promise<ServiceResult<AuthTokens>> {
     const user = await this.usersRepo.findByEmail(dto.email);
     if (!user) {
@@ -88,5 +87,19 @@ export class AuthService {
 
     const accessToken = this.signToken(String(user.id), user.role);
     return { data: { accessToken }, error: null };
+  }
+
+  async getMe(userId: number): Promise<ServiceResult<PublicUser>> {
+    const user = await this.usersRepo.findById(userId);
+    if (!user) {
+      return { data: null, error: "User not found" };
+    }
+
+    const { password: _, ...rest } = user;
+    const publicUser: PublicUser = {
+      ...rest,
+      role: rest.role as "user" | "admin",
+    };
+    return { data: publicUser, error: null };
   }
 }

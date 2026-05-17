@@ -52,6 +52,32 @@ export class AuthController {
         return;
       }
 
+      res.status(200).json(result.data);
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  me = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    try {
+      const userId = Number(req.user?.id);
+
+      if (!userId) {
+        res.status(401).json({ error: "Unauthorized" });
+        return;
+      }
+
+      const result = await this.authService.getMe(userId);
+
+      if (result.error) {
+        res.status(404).json({ error: result.error });
+        return;
+      }
+
       res.status(200).json({ data: result.data });
     } catch (err) {
       next(err);
