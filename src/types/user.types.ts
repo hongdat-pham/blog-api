@@ -1,10 +1,10 @@
 export interface User {
-  id: string;
+  id: number;
   name: string;
   email: string;
   password: string;
   role: "user" | "admin";
-  createdAt: string;
+  createdAt: Date;
 }
 
 export interface RegisterDto {
