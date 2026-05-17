@@ -1,20 +1,37 @@
 import { RequestHandler } from "express";
+import jwt from "jsonwebtoken";
 import config from "../config.js";
 
 const auth: RequestHandler = (req, res, next) => {
-  const apiKey = req.headers["x-api-key"];
+  const authHeader = req.headers["authorization"];
+  const token = authHeader?.startsWith("Bearer ")
+    ? authHeader.slice(7)
+    : undefined;
 
-  if (!apiKey || (apiKey !== config.apiKey && apiKey !== config.adminKey)) {
+  if (!token) {
     res.status(401).json({ error: "Unauthorized" });
     return;
   }
 
-  req.user = {
-    id: "system",
-    role: apiKey === config.adminKey ? "admin" : "user",
-  };
+  try {
+    const payload = jwt.verify(token, config.jwtSecret) as {
+      sub: string;
+      role: string;
+    };
 
-  next();
+    req.user = {
+      id: payload.sub,
+      role: payload.role,
+    };
+
+    next();
+  } catch (err) {
+    if (err instanceof jwt.TokenExpiredError) {
+      res.status(401).json({ error: "Token expired" });
+      return;
+    }
+    res.status(401).json({ error: "Invalid token" });
+  }
 };
 
 export default auth;

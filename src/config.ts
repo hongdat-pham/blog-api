@@ -1,4 +1,5 @@
 import { z } from "zod";
+
 const envSchema = z.object({
   PORT: z.coerce.number().min(1024).max(65535).default(3000),
   NODE_ENV: z
@@ -7,7 +8,10 @@ const envSchema = z.object({
   APP_NAME: z.string().min(1),
   API_KEY: z.string().min(1),
   ADMIN_KEY: z.string().min(1),
+  JWT_SECRET: z.string().min(16),
+  JWT_EXPIRES_IN: z.string().default("1h"),
 });
+
 const result = envSchema.safeParse(process.env);
 if (!result.success) {
   console.error("Invalid environment variables:");
@@ -25,6 +29,8 @@ const config = {
   adminKey: env.ADMIN_KEY,
   isProduction: env.NODE_ENV === "production",
   isDevelopment: env.NODE_ENV === "development",
+  jwtSecret: env.JWT_SECRET,
+  jwtExpiresIn: env.JWT_EXPIRES_IN,
 } as const;
 
 export default config;

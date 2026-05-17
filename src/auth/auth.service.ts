@@ -1,9 +1,15 @@
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 import { UsersRepository } from "../users/users.model.js";
 import { RegisterDto, LoginDto, PublicUser } from "../types/user.types.js";
 import { ServiceResult } from "../types/common.types.js";
+import config from "../config.js";
 
 const SALT_ROUNDS = 10;
+
+interface AuthTokens {
+  accessToken: string;
+}
 
 export class AuthService {
   constructor(private readonly usersRepo: UsersRepository) {}
@@ -18,22 +24,25 @@ export class AuthService {
         message: "Password must be at least 8 characters long",
       };
     }
-
     if (!/\d/.test(password)) {
       return {
         isValid: false,
         message: "Password must contain at least one digit",
       };
     }
-
     if (!/[A-Z]/.test(password)) {
       return {
         isValid: false,
         message: "Password must contain at least one uppercase letter",
       };
     }
-
     return { isValid: true };
+  }
+
+  private signToken(userId: string, role: string): string {
+    return jwt.sign({ sub: userId, role }, config.jwtSecret, {
+      expiresIn: config.jwtExpiresIn as jwt.SignOptions["expiresIn"],
+    });
   }
 
   async register(dto: RegisterDto): Promise<ServiceResult<PublicUser>> {
@@ -51,18 +60,22 @@ export class AuthService {
     }
 
     const hashedPassword = await bcrypt.hash(dto.password, SALT_ROUNDS);
-
     const created = await this.usersRepo.create({
       name: dto.name,
       email: dto.email,
       password: hashedPassword,
     });
 
-    const { password: _, ...publicUser } = created;
+    const { password: _, ...rest } = created;
+    const publicUser: PublicUser = {
+      ...rest,
+      role: rest.role as "user" | "admin",
+    };
     return { data: publicUser, error: null };
   }
 
-  async login(dto: LoginDto): Promise<ServiceResult<PublicUser>> {
+  // login giờ trả về AccessToken thay vì PublicUser
+  async login(dto: LoginDto): Promise<ServiceResult<AuthTokens>> {
     const user = await this.usersRepo.findByEmail(dto.email);
     if (!user) {
       return { data: null, error: "Invalid email or password" };
@@ -73,7 +86,7 @@ export class AuthService {
       return { data: null, error: "Invalid email or password" };
     }
 
-    const { password: _, ...publicUser } = user;
-    return { data: publicUser, error: null };
+    const accessToken = this.signToken(String(user.id), user.role);
+    return { data: { accessToken }, error: null };
   }
 }
