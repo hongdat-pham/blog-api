@@ -8,7 +8,43 @@ const SALT_ROUNDS = 10;
 export class AuthService {
   constructor(private readonly usersRepo: UsersRepository) {}
 
+  private validatePasswordStrength(password: string): {
+    isValid: boolean;
+    message?: string;
+  } {
+    if (password.length < 8) {
+      return {
+        isValid: false,
+        message: "Password must be at least 8 characters long",
+      };
+    }
+
+    if (!/\d/.test(password)) {
+      return {
+        isValid: false,
+        message: "Password must contain at least one digit",
+      };
+    }
+
+    if (!/[A-Z]/.test(password)) {
+      return {
+        isValid: false,
+        message: "Password must contain at least one uppercase letter",
+      };
+    }
+
+    return { isValid: true };
+  }
+
   async register(dto: RegisterDto): Promise<ServiceResult<PublicUser>> {
+    const passwordValidation = this.validatePasswordStrength(dto.password);
+    if (!passwordValidation.isValid) {
+      return {
+        data: null,
+        error: passwordValidation.message ?? "Invalid password",
+      };
+    }
+
     const existing = await this.usersRepo.findByEmail(dto.email);
     if (existing) {
       return { data: null, error: "Email already in use" };
