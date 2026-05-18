@@ -8,13 +8,12 @@ import config from "../config.js";
 import prisma from "../database/prisma.js";
 
 const SALT_ROUNDS = 10;
-// Access token ngắn hạn, refresh token dài hạn
 const ACCESS_TOKEN_EXPIRES_IN = "15m";
 const REFRESH_TOKEN_EXPIRES_DAYS = 7;
 
 interface AuthTokens {
   accessToken: string;
-  refreshToken: string; // 👈 thêm vào đây
+  refreshToken: string;
 }
 
 export class AuthService {
@@ -51,13 +50,10 @@ export class AuthService {
     });
   }
 
-  // Tạo refresh token ngẫu nhiên (không phải JWT)
-  // crypto.randomBytes tạo chuỗi hex ngẫu nhiên — không thể đoán được
   private generateRefreshToken(): string {
     return crypto.randomBytes(64).toString("hex");
   }
 
-  // Lưu refresh token vào DB dưới dạng hash
   private async saveRefreshToken(userId: number, token: string): Promise<void> {
     const hashedToken = await bcrypt.hash(token, SALT_ROUNDS);
     const expiresAt = new Date();
@@ -110,21 +106,17 @@ export class AuthService {
     const accessToken = this.signAccessToken(String(user.id), user.role);
     const refreshToken = this.generateRefreshToken();
 
-    // Lưu refresh token vào DB (dạng hash)
     await this.saveRefreshToken(user.id, refreshToken);
 
-    // Trả về token thô (không phải hash) cho client
     return { data: { accessToken, refreshToken }, error: null };
   }
 
   async refresh(token: string): Promise<ServiceResult<AuthTokens>> {
-    // Tìm tất cả refresh token chưa hết hạn trong DB
     const storedTokens = await prisma.refreshToken.findMany({
       where: { expiresAt: { gt: new Date() } },
       include: { user: true },
     });
 
-    // So sánh token thô với từng hash trong DB
     let matchedToken = null;
     for (const stored of storedTokens) {
       const isMatch = await bcrypt.compare(token, stored.token);
@@ -134,15 +126,25 @@ export class AuthService {
       }
     }
 
-    // Token không tìm thấy → có thể là replay attack
     if (!matchedToken) {
       return { data: null, error: "Invalid or expired refresh token" };
     }
 
-    // XÓA token cũ (rotation — token chỉ dùng 1 lần)
-    await prisma.refreshToken.delete({ where: { id: matchedToken.id } });
+    if (matchedToken.status === "used") {
+      await prisma.refreshToken.deleteMany({
+        where: { userId: matchedToken.userId },
+      });
+      return {
+        data: null,
+        error: "Token has been used already. All sessions terminated.",
+      };
+    }
 
-    // Tạo cặp token mới
+    await prisma.refreshToken.update({
+      where: { id: matchedToken.id },
+      data: { status: "used" },
+    });
+
     const user = matchedToken.user;
     const newAccessToken = this.signAccessToken(String(user.id), user.role);
     const newRefreshToken = this.generateRefreshToken();
@@ -155,7 +157,6 @@ export class AuthService {
   }
 
   async logout(token: string): Promise<ServiceResult<null>> {
-    // Tìm và xóa đúng refresh token này trong DB
     const storedTokens = await prisma.refreshToken.findMany();
 
     let matchedToken = null;

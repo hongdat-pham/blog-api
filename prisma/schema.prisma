@@ -52,6 +52,7 @@ model RefreshToken {
   token     String   
   userId    Int
   user      User     @relation(fields: [userId], references: [id])
+  status    String   @default("active")
   expiresAt DateTime
   createdAt DateTime @default(now())
 }
