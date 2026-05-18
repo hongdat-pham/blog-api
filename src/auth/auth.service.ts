@@ -1,14 +1,20 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 import { UsersRepository } from "../users/users.model.js";
 import { RegisterDto, LoginDto, PublicUser } from "../types/user.types.js";
 import { ServiceResult } from "../types/common.types.js";
 import config from "../config.js";
+import prisma from "../database/prisma.js";
 
 const SALT_ROUNDS = 10;
+// Access token ngắn hạn, refresh token dài hạn
+const ACCESS_TOKEN_EXPIRES_IN = "15m";
+const REFRESH_TOKEN_EXPIRES_DAYS = 7;
 
 interface AuthTokens {
   accessToken: string;
+  refreshToken: string; // 👈 thêm vào đây
 }
 
 export class AuthService {
@@ -39,9 +45,26 @@ export class AuthService {
     return { isValid: true };
   }
 
-  private signToken(userId: string, role: string): string {
+  private signAccessToken(userId: string, role: string): string {
     return jwt.sign({ sub: userId, role }, config.jwtSecret, {
-      expiresIn: config.jwtExpiresIn as jwt.SignOptions["expiresIn"],
+      expiresIn: ACCESS_TOKEN_EXPIRES_IN as jwt.SignOptions["expiresIn"],
+    });
+  }
+
+  // Tạo refresh token ngẫu nhiên (không phải JWT)
+  // crypto.randomBytes tạo chuỗi hex ngẫu nhiên — không thể đoán được
+  private generateRefreshToken(): string {
+    return crypto.randomBytes(64).toString("hex");
+  }
+
+  // Lưu refresh token vào DB dưới dạng hash
+  private async saveRefreshToken(userId: number, token: string): Promise<void> {
+    const hashedToken = await bcrypt.hash(token, SALT_ROUNDS);
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + REFRESH_TOKEN_EXPIRES_DAYS);
+
+    await prisma.refreshToken.create({
+      data: { token: hashedToken, userId, expiresAt },
     });
   }
 
@@ -67,11 +90,10 @@ export class AuthService {
     });
 
     const { password: _, ...rest } = created;
-    const publicUser: PublicUser = {
-      ...rest,
-      role: rest.role as "user" | "admin",
+    return {
+      data: { ...rest, role: rest.role as "user" | "admin" },
+      error: null,
     };
-    return { data: publicUser, error: null };
   }
 
   async login(dto: LoginDto): Promise<ServiceResult<AuthTokens>> {
@@ -85,8 +107,72 @@ export class AuthService {
       return { data: null, error: "Invalid email or password" };
     }
 
-    const accessToken = this.signToken(String(user.id), user.role);
-    return { data: { accessToken }, error: null };
+    const accessToken = this.signAccessToken(String(user.id), user.role);
+    const refreshToken = this.generateRefreshToken();
+
+    // Lưu refresh token vào DB (dạng hash)
+    await this.saveRefreshToken(user.id, refreshToken);
+
+    // Trả về token thô (không phải hash) cho client
+    return { data: { accessToken, refreshToken }, error: null };
+  }
+
+  async refresh(token: string): Promise<ServiceResult<AuthTokens>> {
+    // Tìm tất cả refresh token chưa hết hạn trong DB
+    const storedTokens = await prisma.refreshToken.findMany({
+      where: { expiresAt: { gt: new Date() } },
+      include: { user: true },
+    });
+
+    // So sánh token thô với từng hash trong DB
+    let matchedToken = null;
+    for (const stored of storedTokens) {
+      const isMatch = await bcrypt.compare(token, stored.token);
+      if (isMatch) {
+        matchedToken = stored;
+        break;
+      }
+    }
+
+    // Token không tìm thấy → có thể là replay attack
+    if (!matchedToken) {
+      return { data: null, error: "Invalid or expired refresh token" };
+    }
+
+    // XÓA token cũ (rotation — token chỉ dùng 1 lần)
+    await prisma.refreshToken.delete({ where: { id: matchedToken.id } });
+
+    // Tạo cặp token mới
+    const user = matchedToken.user;
+    const newAccessToken = this.signAccessToken(String(user.id), user.role);
+    const newRefreshToken = this.generateRefreshToken();
+    await this.saveRefreshToken(user.id, newRefreshToken);
+
+    return {
+      data: { accessToken: newAccessToken, refreshToken: newRefreshToken },
+      error: null,
+    };
+  }
+
+  async logout(token: string): Promise<ServiceResult<null>> {
+    // Tìm và xóa đúng refresh token này trong DB
+    const storedTokens = await prisma.refreshToken.findMany();
+
+    let matchedToken = null;
+    for (const stored of storedTokens) {
+      const isMatch = await bcrypt.compare(token, stored.token);
+      if (isMatch) {
+        matchedToken = stored;
+        break;
+      }
+    }
+
+    if (!matchedToken) {
+      return { data: null, error: "Invalid refresh token" };
+    }
+
+    await prisma.refreshToken.delete({ where: { id: matchedToken.id } });
+    return { data: null, error: null };
   }
 
   async getMe(userId: number): Promise<ServiceResult<PublicUser>> {
@@ -96,10 +182,9 @@ export class AuthService {
     }
 
     const { password: _, ...rest } = user;
-    const publicUser: PublicUser = {
-      ...rest,
-      role: rest.role as "user" | "admin",
+    return {
+      data: { ...rest, role: rest.role as "user" | "admin" },
+      error: null,
     };
-    return { data: publicUser, error: null };
   }
 }
